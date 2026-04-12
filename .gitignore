@@ -1,0 +1,29 @@
+# Python/Django
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+db.sqlite3
+media/
+staticfiles/
+
+# Angular/Node
+node_modules/
+dist/
+.angular/
+.npm
+npm-debug.log*
+yarn-error.log*
+.vscode/
+
+# IDE
+.DS_Store
+../.idea/
+*.swp
+*.bak
+.DS_Store?
+thumbs.db
+
+# Postman
+postman_environment.json
