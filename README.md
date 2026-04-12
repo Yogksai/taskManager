@@ -1,9 +1,5 @@
 # TO-DO
-Добавление подзадач (POST /api/subtasks/)
 
-Изменение задач (PATCH или PUT)
-
-Удаление задач (DELETE /api/tasks/{id}/)
 # Как тестировать
 1. **Скачать Docker Desktop:**
    - [Для Windows](https://www.docker.com/products/docker-desktop/)
@@ -27,10 +23,6 @@ make setup
 # Для выключения
 make down
 ```
-
-# Task Manager API: Documentation
-
-
 ---
 
 ## 1. Общие правила (Security & Base)
@@ -38,73 +30,63 @@ make down
 - **Base URL:** `http://localhost:8000`
 - **Auth Strategy:** Token Authentication (Django REST Framework).
 - **Required Headers:** Для всех защищенных запросов необходимо передавать заголовок:
+- **CORS:** Разрешен для http://localhost:4200 (Angular default).
   `Authorization: 'Token <ваш_токен>'`
 
 ---
 
-## 👥 2. Аутентификация (Auth)
+# 🚀 API Reference Guide
 
-### 2.1 Регистрация
-`POST /api/register/`
+### 🔑 Аутентификация
+**Заголовок для всех запросов (кроме регистрации и логина):** `Authorization: Token <ваш_токен>`
 
-**Request Body (JSON):**
+---
+
+### 1. Аккаунт и Доступ
+| Метод | Эндпоинт | Описание                      | Payload (JSON) | Ответ (Success) |
+| :--- | :--- |:------------------------------| :--- | :--- |
+| **POST** | `/api/register/` | Создание нового пользователя  | `{"username", "email", "password"}` | `201` + данные юзера |
+| **POST** | `/api/login/` | логина-пароль                 | `{"username", "password"}` | `200` + `{"token": "..."}` |
+| **POST** | `/api/logout/` | Аннулирование текущего токена | (пусто) | `204 No Content` |
+
+---
+
+### 2. Задачи (Tasks)
+*Все операции фильтруются по `owner=request.user` (вы видите и меняете только свой задачи)*
+
+| Метод | Эндпоинт | Действие | Payload (JSON) | Ответ |
+| :--- | :--- | :--- | :--- | :--- |
+| **GET** | `/api/tasks/` | Получить список всех своих задач | (пусто) | `200` + Список объектов Task |
+| **POST** | `/api/tasks/` | Создать новую задачу | `{"description", "status"}` | `201` + Созданный объект |
+| **GET** | `/api/tasks/<id>/` | Детали задачи (+ подзадачи и фото) | (пусто) | `200` + Объект Task |
+| **PATCH** | `/api/tasks/<id>/` | Частично изменить задачу | `{"status": "completed"}` | `200` + Обновленный объект |
+| **DELETE** | `/api/tasks/<id>/` | Удалить задачу | (пусто) | `204 No Content` |
+
+**Структура объекта Task:**
 ```json
 {
-    "username": "kadera",
-    "email": "dev@example.com",
-    "password": "strong_password_123"
+    "id": 1,
+    "description": "Текст",
+    "status": "new", // или 'in_progress', 'completed'
+    "owner_name": "user1",
+    "subtasks": [...], 
+    "images": [...]
 }
 ```
-**Success 201**: Пользователь создан
 
-### 2.2 Получение токена (Логин)
-`POST /api/login/`
+### 🖇️ Подзадачи (SubTasks)
+Эндпоинт: `/api/subtasks/` — требует авторизацию типа такого(Token 3eabea590)
 
-**Request Body (JSON):**
-```json
+| Метод | Действие | Ожидаемый Payload (JSON) | Ответ (Success) | Логика защиты |
+| :--- | :--- | :--- | :--- | :--- |
+| **GET** | Список всех ваших подзадач | (пусто) | `200 OK` + Массив объектов | Видит только те подзадачи, чьи родители (Tasks) принадлежат вам. |
+| **POST** | Создать подзадачу | `{"task_id": int, "description": "str", "status": "str"}` | `201 Created` | Вернет `403 Forbidden`, если попытаться привязать подзадачу к чужому `task_id`. |
+| **PATCH** | Изменить подзадачу | `{"description": "new text", "status": "completed"}` | `200 OK` | Позволяет менять только описание и статус. Перенос в другой `task_id` игнорируется. |
+| **DELETE** | Удалить подзадачу | (пусто) | `204 No Content` | Удаляет только если подзадача найдена в списке ваших задач. |
+
+**Пример объекта SubTask (JSON):**
 {
-    "username": "kadera",
-    "password": "strong_password_123"
+    "id": 42,
+    "description": "Написать тесты для контроллера",
+    "status": "in_progress" 
 }
-```
-**Response 200**:
-```json
-{
-    "token": "9da0465a972e3360a8122c5b0410a152fd652ba8"
-}
-```
-## Задачи (Tasks)
-### 3.1 Список задач (List)
-`GET /api/tasks/`
-Возвращает только задачи текущего авторизованного пользователя
-
-**Response:**
-```json
-[
-    {
-        "id": 1,
-        "description": "Изучить CAP",
-        "status": "new",
-        "created_at": "2026-04-12T14:30:00Z",
-        "owner_name": "kad",
-        "subtasks": [],
-        "images": [
-            {
-                "id": 1,
-                "image_base64": "data:image/png;base64,iVBORw0K...",
-                "task": 1
-            }
-        ]
-    }
-]
-```
-### 3.2 Создание задачи (Create)
-`POST /api/tasks/`
-
-Для передачи файлов используйте multipart/form-data
-
-Key | Type | Description
-
-description | string | Текст задачи (обязательно)
-
-image | file | Объект файла изображения (опционально)
