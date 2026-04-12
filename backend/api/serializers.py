@@ -1,6 +1,6 @@
 import base64
 from rest_framework import serializers
-from .models import User, Task, SubTask, TaskImage
+from .models import User, Task, SubTask
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -16,25 +16,31 @@ class UserSerializer(serializers.ModelSerializer):
         # password hash
         return User.objects.create_user(**validated_data)
 
+class SubTaskSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    description = serializers.CharField()
+    status = serializers.CharField(max_length=20, default='new')
+    task_id = serializers.IntegerField(write_only=True)  # Заменили source на прямой ID
 
-class SubTaskSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SubTask
-        fields = ['id', 'description', 'status', 'task']
+    def create(self, validated_data):
+        return SubTask.objects.create(
+            task_id=validated_data.pop('task_id'),
+            **validated_data
+        )
+    def update(self, instance, validated_data):
+        instance.description = validated_data.get('description', instance.description)
+        instance.status = validated_data.get('status', instance.status)
+        instance.save()
+        return instance
 
-
-class TaskImageSerializer(serializers.ModelSerializer):
+class TaskImageSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
     image_base64 = serializers.SerializerMethodField()
-
-    class Meta:
-        model = TaskImage
-        fields = ['id', 'image_base64', 'task']
 
     def get_image_base64(self, obj):
         if obj.payload:
             return base64.b64encode(obj.payload).decode('utf-8')
         return None
-
 
 class TaskSerializer(serializers.ModelSerializer):
     subtasks = SubTaskSerializer(many=True, read_only=True)
@@ -55,3 +61,4 @@ class TaskSerializer(serializers.ModelSerializer):
             'images'
         ]
         read_only_fields = ['owner', 'created_at']
+

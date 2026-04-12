@@ -3,6 +3,10 @@ from django.db import models
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
+class TaskManager(models.Manager):
+    def get_completed(self):
+        return self.filter(status='completed')
+
 class User(AbstractUser):
     email = models.EmailField(unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -24,7 +28,7 @@ class Task(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tasks')
-
+    objects = TaskManager()
 
 class SubTask(models.Model): #[One to Many] to Task
     STATUS_CHOICES = [
