@@ -4,6 +4,30 @@
 Изменение задач (PATCH или PUT)
 
 Удаление задач (DELETE /api/tasks/{id}/)
+# Как тестировать
+1. **Скачать Docker Desktop:**
+   - [Для Windows](https://www.docker.com/products/docker-desktop/)
+   - [Для macOS](https://docs.docker.com/desktop/install/mac-install/)
+   - [Для Linux](https://docs.docker.com/desktop/install/linux-install/)
+
+2. **Проверка установки:**
+   Откройте терминал и выполните:
+   ```bash
+   docker --version
+   docker-compose --version
+   ```
+3. **Запуск:** 
+Клонируйте репозиторий и выполните следующие команды в корне проекта:
+
+```bash
+# Сборка и запуск контейнеров
+make up
+# При первом запуске: создание базы данных и миграций
+make setup
+# Для выключения
+make down
+```
+
 # Task Manager API: Documentation
 
 
