@@ -1,4 +1,10 @@
-# Task Manager API: Full Documentation
+# TO-DO
+Добавление подзадач (POST /api/subtasks/)
+
+Изменение задач (PATCH или PUT)
+
+Удаление задач (DELETE /api/tasks/{id}/)
+# Task Manager API: Documentation
 
 
 ---
