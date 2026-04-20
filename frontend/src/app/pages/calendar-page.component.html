@@ -15,16 +15,14 @@
   </header>
 
   <section class="calendar-controls">
-    <label>
-      Day
-      <input
-        type="date"
-        [ngModel]="selectedDate()"
-        (ngModelChange)="onDateChange($event)"
-      />
-    </label>
+    <div class="week-switcher">
+      <button type="button" (click)="moveWeek(-1)">Previous Week</button>
+      <button type="button" (click)="setToday()">This Week</button>
+      <button type="button" (click)="moveWeek(1)">Next Week</button>
+    </div>
 
-    <button type="button" (click)="setToday()">Today</button>
+    <p class="week-label">{{ weekLabel() }}</p>
+
     <button type="button" (click)="fetchTasks()">Refresh</button>
   </section>
 
@@ -35,62 +33,65 @@
   @if (loading()) {
     <div class="placeholder">Loading calendar...</div>
   } @else {
-    <section class="calendar-grid">
-      <article class="calendar-card">
-        <h2>Tasks on {{ selectedDate() }}</h2>
-        @if (tasksForSelectedDate().length === 0) {
-          <p class="hint">No deadlines on this date.</p>
-        } @else {
-          <ul>
-            @for (task of tasksForSelectedDate(); track taskTrackBy($index, task)) {
-              <li>
-                <div>
-                  <strong>{{ task.description }}</strong>
-                  <small>Status: {{ humanizeStatus(task.status) }}</small>
-                </div>
-                <span class="time-chip">{{ formatTime(task.due_time) }}</span>
-              </li>
+    <section class="week-layout">
+      <article class="week-calendar">
+        <div class="week-grid-header">
+          <div class="time-head"></div>
+          @for (day of weekDays(); track day.iso) {
+            <div class="day-head">
+              <span>{{ day.dayName }}</span>
+              <strong>{{ day.dayNumber }}</strong>
+            </div>
+          }
+        </div>
+
+        <div class="week-grid-body">
+          <div class="time-column">
+            @for (label of timeLabels(); track label) {
+              <div class="time-slot">{{ label }}</div>
             }
-          </ul>
-        }
+          </div>
+
+          @for (day of weekDays(); track day.iso) {
+            <div class="day-column">
+              @for (label of timeLabels(); track label) {
+                <div class="hour-line"></div>
+              }
+
+              @for (event of eventsForDay(day.iso); track eventTrackBy($index, event)) {
+                <article
+                  class="event-card"
+                  [class]="'event-card ' + eventStatusClass(event.status)"
+                  [style.top.px]="event.top"
+                  [style.height.px]="event.height"
+                >
+                  <strong>{{ event.title }}</strong>
+                  <small>{{ event.startLabel }} - {{ event.endLabel }}</small>
+                </article>
+              }
+            </div>
+          }
+        </div>
       </article>
 
-      <article class="calendar-card">
-        <h2>All Scheduled Tasks</h2>
-        @if (tasksWithDeadline().length === 0) {
-          <p class="hint">No tasks with date yet.</p>
+      <aside class="nearby-list">
+        <h2>Nearby Tasks (No Exact Time)</h2>
+        @if (nearbyTasks().length === 0) {
+          <p class="hint">All tasks are already placed in weekly schedule.</p>
         } @else {
           <ul>
-            @for (task of tasksWithDeadline(); track taskTrackBy($index, task)) {
+            @for (task of nearbyTasks(); track taskTrackBy($index, task)) {
               <li>
                 <div>
                   <strong>{{ task.description }}</strong>
-                  <small>{{ task.due_date }} at {{ formatTime(task.due_time) }}</small>
+                  <small>{{ taskScheduleLabel(task) }}</small>
                 </div>
                 <span class="status-chip">{{ humanizeStatus(task.status) }}</span>
               </li>
             }
           </ul>
         }
-      </article>
-
-      <article class="calendar-card">
-        <h2>Without Deadline</h2>
-        @if (unscheduledTasks().length === 0) {
-          <p class="hint">Everything is scheduled.</p>
-        } @else {
-          <ul>
-            @for (task of unscheduledTasks(); track taskTrackBy($index, task)) {
-              <li>
-                <div>
-                  <strong>{{ task.description }}</strong>
-                  <small>Status: {{ humanizeStatus(task.status) }}</small>
-                </div>
-              </li>
-            }
-          </ul>
-        }
-      </article>
+      </aside>
     </section>
   }
 </section>

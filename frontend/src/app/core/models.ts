@@ -31,6 +31,8 @@ export interface Task {
   id: number;
   description: string;
   status: TaskStatus;
+  start_date: string | null;
+  start_time: string | null;
   due_date: string | null;
   due_time: string | null;
   created_at: string;
@@ -43,6 +45,8 @@ export interface Task {
 export interface TaskPayload {
   description: string;
   status: TaskStatus;
+  start_date?: string | null;
+  start_time?: string | null;
   due_date?: string | null;
   due_time?: string | null;
 }

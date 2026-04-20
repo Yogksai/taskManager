@@ -124,7 +124,7 @@ h1 {
 
 .create-form {
   display: grid;
-  grid-template-columns: 1fr 190px 180px 160px auto;
+  grid-template-columns: minmax(280px, 1fr) repeat(5, minmax(140px, 180px)) auto;
   gap: 0.8rem;
   align-items: end;
 }

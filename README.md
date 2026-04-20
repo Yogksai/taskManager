@@ -57,9 +57,9 @@ make down
 | Метод | Эндпоинт | Действие | Payload (JSON) | Ответ |
 | :--- | :--- | :--- | :--- | :--- |
 | **GET** | `/api/tasks/` | Получить список всех своих задач | (пусто) | `200` + Список объектов Task |
-| **POST** | `/api/tasks/` | Создать новую задачу | `{"description", "status", "due_date?", "due_time?"}` | `201` + Созданный объект |
+| **POST** | `/api/tasks/` | Создать новую задачу | `{"description", "status", "start_date?", "start_time?", "due_date?", "due_time?"}` | `201` + Созданный объект |
 | **GET** | `/api/tasks/<id>/` | Детали задачи (+ подзадачи и фото) | (пусто) | `200` + Объект Task |
-| **PATCH** | `/api/tasks/<id>/` | Частично изменить задачу | `{"status": "completed", "due_date": "2026-04-21", "due_time": "14:30:00"}` | `200` + Обновленный объект |
+| **PATCH** | `/api/tasks/<id>/` | Частично изменить задачу | `{"status": "completed", "start_date": "2026-04-21", "start_time": "12:00:00", "due_date": "2026-04-21", "due_time": "14:30:00"}` | `200` + Обновленный объект |
 | **DELETE** | `/api/tasks/<id>/` | Удалить задачу | (пусто) | `204 No Content` |
 
 **Структура объекта Task:**
@@ -68,6 +68,8 @@ make down
     "id": 1,
     "description": "Текст",
     "status": "new", // или 'in_progress', 'completed'
+    "start_date": "2026-04-21", // опционально, формат YYYY-MM-DD
+    "start_time": "12:00:00", // опционально, формат HH:MM:SS
     "due_date": "2026-04-21", // опционально, формат YYYY-MM-DD
     "due_time": "14:30:00", // опционально, формат HH:MM:SS
     "owner_name": "user1",

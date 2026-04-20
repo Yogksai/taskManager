@@ -27,6 +27,8 @@ export class DashboardPageComponent {
 
   newTaskDescription = '';
   newTaskStatus: TaskStatus = 'new';
+  newTaskStartDate = '';
+  newTaskStartTime = '';
   newTaskDueDate = '';
   newTaskDueTime = '';
   readonly subtaskForms = new Map<number, SubtaskForm>();
@@ -92,6 +94,26 @@ export class DashboardPageComponent {
       return;
     }
 
+    if (this.newTaskStartTime && !this.newTaskStartDate) {
+      this.errorMessage.set('Choose start date when start time is set.');
+      return;
+    }
+
+    if (this.newTaskDueTime && !this.newTaskDueDate) {
+      this.errorMessage.set('Choose deadline date when deadline time is set.');
+      return;
+    }
+
+    if (this.newTaskStartDate && this.newTaskDueDate) {
+      const startStamp = `${this.newTaskStartDate} ${this.newTaskStartTime || '00:00:00'}`;
+      const dueStamp = `${this.newTaskDueDate} ${this.newTaskDueTime || '23:59:59'}`;
+
+      if (startStamp > dueStamp) {
+        this.errorMessage.set('Start must be earlier than deadline.');
+        return;
+      }
+    }
+
     this.busy.set(true);
     this.errorMessage.set('');
 
@@ -99,6 +121,8 @@ export class DashboardPageComponent {
       .createTask({
         description,
         status: this.newTaskStatus,
+        start_date: this.newTaskStartDate || null,
+        start_time: this.newTaskStartTime || null,
         due_date: this.newTaskDueDate || null,
         due_time: this.newTaskDueTime || null
       })
@@ -107,6 +131,8 @@ export class DashboardPageComponent {
         this.busy.set(false);
         this.newTaskDescription = '';
         this.newTaskStatus = 'new';
+        this.newTaskStartDate = '';
+        this.newTaskStartTime = '';
         this.newTaskDueDate = '';
         this.newTaskDueTime = '';
         this.fetchTasks();
@@ -249,25 +275,38 @@ export class DashboardPageComponent {
   }
 
   formatDeadline(task: Task): string {
-    if (!task.due_date && !task.due_time) {
-      return 'No deadline';
+    if (!task.start_date && !task.start_time && !task.due_date && !task.due_time) {
+      return 'No schedule';
     }
 
-    const datePart = task.due_date
-      ? new Date(task.due_date).toLocaleDateString(undefined, {
+    const formatDate = (value: string | null): string =>
+      value
+        ? new Date(value).toLocaleDateString(undefined, {
           day: '2-digit',
           month: 'short',
           year: 'numeric'
         })
-      : '';
+        : '';
 
-    const timePart = task.due_time ? task.due_time.slice(0, 5) : '';
+    const formatTime = (value: string | null): string => (value ? value.slice(0, 5) : '');
 
-    if (datePart && timePart) {
-      return `${datePart}, ${timePart}`;
+    const startDate = formatDate(task.start_date);
+    const startTime = formatTime(task.start_time);
+    const dueDate = formatDate(task.due_date);
+    const dueTime = formatTime(task.due_time);
+
+    const startLabel = `${startDate}${startDate && startTime ? ', ' : ''}${startTime}`.trim();
+    const dueLabel = `${dueDate}${dueDate && dueTime ? ', ' : ''}${dueTime}`.trim();
+
+    if (startLabel && dueLabel) {
+      return `${startLabel} -> ${dueLabel}`;
     }
 
-    return datePart || timePart;
+    if (startLabel) {
+      return `Start: ${startLabel}`;
+    }
+
+    return `Deadline: ${dueLabel}`;
   }
 
   private ensureSubtaskForms(tasks: Task[]): void {

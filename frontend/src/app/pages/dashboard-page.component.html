@@ -56,12 +56,22 @@
       </label>
 
       <label>
-        Date
+        Start Date
+        <input type="date" name="startDate" [(ngModel)]="newTaskStartDate" />
+      </label>
+
+      <label>
+        Start Time
+        <input type="time" name="startTime" [(ngModel)]="newTaskStartTime" />
+      </label>
+
+      <label>
+        Deadline Date
         <input type="date" name="dueDate" [(ngModel)]="newTaskDueDate" />
       </label>
 
       <label>
-        Time
+        Deadline Time
         <input type="time" name="dueTime" [(ngModel)]="newTaskDueTime" />
       </label>
 
@@ -112,8 +122,8 @@
             </header>
 
             <p class="description">{{ task.description }}</p>
-            <p class="deadline" [class.none]="!task.due_date && !task.due_time">
-              Deadline: {{ formatDeadline(task) }}
+            <p class="deadline" [class.none]="!task.start_date && !task.start_time && !task.due_date && !task.due_time">
+              Schedule: {{ formatDeadline(task) }}
             </p>
 
             <div class="status-row">
