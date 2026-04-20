@@ -1,0 +1,167 @@
+<section class="dashboard-shell">
+  <header class="topbar">
+    <div class="topbar-main">
+      <p class="eyebrow">Flowboard</p>
+      <h1>Welcome, {{ authService.username() || 'Creator' }}</h1>
+      <p class="subtitle">Shape work into meaningful progress.</p>
+
+      <nav class="top-nav" aria-label="Main navigation">
+        <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+        <a routerLink="/calendar" routerLinkActive="active">Calendar</a>
+      </nav>
+    </div>
+
+    <button type="button" class="logout" (click)="logout()">Log Out</button>
+  </header>
+
+  <section class="stats-grid">
+    <article>
+      <p>Total Tasks</p>
+      <strong>{{ stats().total }}</strong>
+    </article>
+    <article>
+      <p>Open</p>
+      <strong>{{ stats().open }}</strong>
+    </article>
+    <article>
+      <p>In Progress</p>
+      <strong>{{ stats().inProgress }}</strong>
+    </article>
+    <article>
+      <p>Completed</p>
+      <strong>{{ stats().completed }}</strong>
+    </article>
+  </section>
+
+  <section class="create-card">
+    <h2>Create Task</h2>
+    <form (ngSubmit)="createTask()" class="create-form">
+      <label>
+        Description
+        <textarea
+          rows="3"
+          name="description"
+          [(ngModel)]="newTaskDescription"
+          placeholder="Draft launch roadmap, design release plan, sync stakeholders..."
+        ></textarea>
+      </label>
+
+      <label>
+        Status
+        <select name="status" [(ngModel)]="newTaskStatus">
+          <option value="new">New</option>
+          <option value="in_progress">In Progress</option>
+          <option value="completed">Completed</option>
+        </select>
+      </label>
+
+      <label>
+        Date
+        <input type="date" name="dueDate" [(ngModel)]="newTaskDueDate" />
+      </label>
+
+      <label>
+        Time
+        <input type="time" name="dueTime" [(ngModel)]="newTaskDueTime" />
+      </label>
+
+      <button type="submit" class="accent" [disabled]="busy()">
+        {{ busy() ? 'Saving...' : 'Add Task' }}
+      </button>
+    </form>
+  </section>
+
+  <section class="task-panel">
+    <div class="task-panel-header">
+      <h2>Tasks</h2>
+      <div class="filters">
+        <button type="button" [class.active]="filter() === 'all'" (click)="setFilter('all')">All</button>
+        <button type="button" [class.active]="filter() === 'new'" (click)="setFilter('new')">New</button>
+        <button
+          type="button"
+          [class.active]="filter() === 'in_progress'"
+          (click)="setFilter('in_progress')"
+        >
+          In Progress
+        </button>
+        <button
+          type="button"
+          [class.active]="filter() === 'completed'"
+          (click)="setFilter('completed')"
+        >
+          Completed
+        </button>
+      </div>
+    </div>
+
+    @if (errorMessage()) {
+      <p class="banner error">{{ errorMessage() }}</p>
+    }
+
+    @if (loading()) {
+      <div class="loading">Loading tasks...</div>
+    } @else if (visibleTasks().length === 0) {
+      <div class="empty">No tasks in this view yet.</div>
+    } @else {
+      <div class="task-grid">
+        @for (task of visibleTasks(); track taskTrackBy($index, task)) {
+          <article class="task-card" [class.completed]="task.status === 'completed'">
+            <header>
+              <p class="status">{{ humanizeStatus(task.status) }}</p>
+              <button type="button" class="danger" (click)="removeTask(task.id)">Delete</button>
+            </header>
+
+            <p class="description">{{ task.description }}</p>
+            <p class="deadline" [class.none]="!task.due_date && !task.due_time">
+              Deadline: {{ formatDeadline(task) }}
+            </p>
+
+            <div class="status-row">
+              <span>Set status:</span>
+              <div class="status-actions">
+                <button type="button" (click)="updateTaskStatus(task, 'new')">New</button>
+                <button type="button" (click)="updateTaskStatus(task, 'in_progress')">In Progress</button>
+                <button type="button" (click)="updateTaskStatus(task, 'completed')">Done</button>
+              </div>
+            </div>
+
+            <section class="subtasks">
+              <h3>Subtasks</h3>
+
+              @if (task.subtasks.length === 0) {
+                <p class="hint">No subtasks yet.</p>
+              } @else {
+                <ul>
+                  @for (subtask of task.subtasks; track subtaskTrackBy($index, subtask)) {
+                    <li>
+                      <div>
+                        <strong>{{ subtask.description }}</strong>
+                        <small>{{ humanizeStatus(subtask.status) }}</small>
+                      </div>
+
+                      <div class="inline-actions">
+                        <button type="button" (click)="updateSubtaskStatus(subtask, 'new')">New</button>
+                        <button type="button" (click)="updateSubtaskStatus(subtask, 'in_progress')">Progress</button>
+                        <button type="button" (click)="updateSubtaskStatus(subtask, 'completed')">Done</button>
+                        <button type="button" class="danger" (click)="removeSubtask(subtask.id)">Delete</button>
+                      </div>
+                    </li>
+                  }
+                </ul>
+              }
+
+              <form class="subtask-form" [formGroup]="getSubtaskForm(task.id)" (ngSubmit)="createSubtask(task)">
+                <input
+                  type="text"
+                  formControlName="description"
+                  placeholder="Add a focused subtask"
+                />
+                <button type="submit" [disabled]="busy()">Add</button>
+              </form>
+            </section>
+          </article>
+        }
+      </div>
+    }
+  </section>
+</section>

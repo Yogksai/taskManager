@@ -1,0 +1,96 @@
+<section class="calendar-shell">
+  <header class="topbar">
+    <div class="topbar-main">
+      <p class="eyebrow">Flowboard</p>
+      <h1>Task Calendar</h1>
+      <p class="subtitle">Track deadlines day by day.</p>
+
+      <nav class="top-nav" aria-label="Main navigation">
+        <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+        <a routerLink="/calendar" routerLinkActive="active">Calendar</a>
+      </nav>
+    </div>
+
+    <button type="button" class="logout" (click)="logout()">Log Out</button>
+  </header>
+
+  <section class="calendar-controls">
+    <label>
+      Day
+      <input
+        type="date"
+        [ngModel]="selectedDate()"
+        (ngModelChange)="onDateChange($event)"
+      />
+    </label>
+
+    <button type="button" (click)="setToday()">Today</button>
+    <button type="button" (click)="fetchTasks()">Refresh</button>
+  </section>
+
+  @if (errorMessage()) {
+    <p class="banner error">{{ errorMessage() }}</p>
+  }
+
+  @if (loading()) {
+    <div class="placeholder">Loading calendar...</div>
+  } @else {
+    <section class="calendar-grid">
+      <article class="calendar-card">
+        <h2>Tasks on {{ selectedDate() }}</h2>
+        @if (tasksForSelectedDate().length === 0) {
+          <p class="hint">No deadlines on this date.</p>
+        } @else {
+          <ul>
+            @for (task of tasksForSelectedDate(); track taskTrackBy($index, task)) {
+              <li>
+                <div>
+                  <strong>{{ task.description }}</strong>
+                  <small>Status: {{ humanizeStatus(task.status) }}</small>
+                </div>
+                <span class="time-chip">{{ formatTime(task.due_time) }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </article>
+
+      <article class="calendar-card">
+        <h2>All Scheduled Tasks</h2>
+        @if (tasksWithDeadline().length === 0) {
+          <p class="hint">No tasks with date yet.</p>
+        } @else {
+          <ul>
+            @for (task of tasksWithDeadline(); track taskTrackBy($index, task)) {
+              <li>
+                <div>
+                  <strong>{{ task.description }}</strong>
+                  <small>{{ task.due_date }} at {{ formatTime(task.due_time) }}</small>
+                </div>
+                <span class="status-chip">{{ humanizeStatus(task.status) }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </article>
+
+      <article class="calendar-card">
+        <h2>Without Deadline</h2>
+        @if (unscheduledTasks().length === 0) {
+          <p class="hint">Everything is scheduled.</p>
+        } @else {
+          <ul>
+            @for (task of unscheduledTasks(); track taskTrackBy($index, task)) {
+              <li>
+                <div>
+                  <strong>{{ task.description }}</strong>
+                  <small>Status: {{ humanizeStatus(task.status) }}</small>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </article>
+    </section>
+  }
+</section>

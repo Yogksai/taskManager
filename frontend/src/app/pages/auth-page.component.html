@@ -1,0 +1,96 @@
+<section class="auth-shell">
+  <aside class="hero-pane">
+    <p class="eyebrow">Task Manager</p>
+    <h1>Plan with style, finish with focus.</h1>
+    <p class="hero-copy">
+      Build your day as a visual flowboard. Organize tasks, split into subtasks, and keep momentum
+      with a clean, energetic workspace.
+    </p>
+
+    <div class="hero-tags">
+      <span>Live Status Tracking</span>
+      <span>Subtask Progress</span>
+    </div>
+  </aside>
+
+  <article class="auth-card">
+    <div class="auth-tabs" role="tablist" aria-label="Authentication mode">
+      <button
+        type="button"
+        class="tab"
+        [class.active]="mode() === 'login'"
+        (click)="setMode('login')"
+      >
+        Sign In
+      </button>
+      <button
+        type="button"
+        class="tab"
+        [class.active]="mode() === 'register'"
+        (click)="setMode('register')"
+      >
+        Create Account
+      </button>
+    </div>
+
+    @if (mode() === 'login') {
+      <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="onLogin()">
+        <label>
+          Username
+          <input type="text" formControlName="username" placeholder="your_username" />
+          @if (isInvalid('username', 'login')) {
+            <small>Username is required.</small>
+          }
+        </label>
+
+        <label>
+          Password
+          <input type="password" formControlName="password" placeholder="Enter password" />
+          @if (isInvalid('password', 'login')) {
+            <small>Password is required.</small>
+          }
+        </label>
+
+        <button type="submit" class="submit" [disabled]="loading()">{{ loading() ? 'Signing in...' : 'Sign In' }}</button>
+      </form>
+    } @else {
+      <form class="auth-form" [formGroup]="registerForm" (ngSubmit)="onRegister()">
+        <label>
+          Username
+          <input type="text" formControlName="username" placeholder="new_username" />
+          @if (isInvalid('username', 'register')) {
+            <small>Use at least 3 characters.</small>
+          }
+        </label>
+
+        <label>
+          Email
+          <input type="email" formControlName="email" placeholder="name@example.com" />
+          @if (isInvalid('email', 'register')) {
+            <small>Enter a valid email.</small>
+          }
+        </label>
+
+        <label>
+          Password
+          <input type="password" formControlName="password" placeholder="Create password" />
+          @if (isInvalid('password', 'register')) {
+            <small>Use at least 6 characters.</small>
+          }
+        </label>
+
+        <button type="submit" class="submit" [disabled]="loading()">
+          {{ loading() ? 'Creating account...' : 'Create Account' }}
+        </button>
+      </form>
+    }
+
+    @if (errorMessage()) {
+      <p class="message error">{{ errorMessage() }}</p>
+    }
+
+    @if (infoMessage()) {
+      <p class="message info">{{ infoMessage() }}</p>
+    }
+  </article>
+</section>

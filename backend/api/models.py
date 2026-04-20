@@ -1,6 +1,4 @@
 from django.db import models
-
-from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 class TaskManager(models.Manager):
@@ -25,6 +23,8 @@ class Task(models.Model):
 
     description = models.TextField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
+    due_date = models.DateField(null=True, blank=True)
+    due_time = models.TimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tasks')

@@ -1,0 +1,38 @@
+:host {
+	display: block;
+	min-height: 100vh;
+	position: relative;
+	isolation: isolate;
+}
+
+.ambient-glow {
+	position: fixed;
+	inset: -20vmax;
+	z-index: -2;
+	pointer-events: none;
+	background:
+		radial-gradient(circle at 12% 10%, rgba(244, 107, 61, 0.34), transparent 34%),
+		radial-gradient(circle at 90% 5%, rgba(42, 163, 155, 0.32), transparent 30%),
+		radial-gradient(circle at 80% 88%, rgba(237, 183, 80, 0.2), transparent 42%);
+	animation: drift 20s ease-in-out infinite alternate;
+}
+
+.paper-noise {
+	position: fixed;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
+	opacity: 0.08;
+	background-image: radial-gradient(circle at 2px 2px, rgba(0, 0, 0, 0.42) 1px, transparent 0);
+	background-size: 22px 22px;
+}
+
+@keyframes drift {
+	from {
+		transform: translate3d(-2%, -1%, 0) scale(1);
+	}
+
+	to {
+		transform: translate3d(2%, 1%, 0) scale(1.03);
+	}
+}
