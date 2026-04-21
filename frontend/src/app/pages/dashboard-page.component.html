@@ -1,4 +1,4 @@
-<section class="dashboard-shell">
+<section class="dashboard-shell" [class.messi-mode]="messiMode()">
   <header class="topbar">
     <div class="topbar-main">
       <p class="eyebrow">Flowboard</p>
@@ -126,6 +126,36 @@
               Schedule: {{ formatDeadline(task) }}
             </p>
 
+            <section class="task-images">
+              <h3>Task Photos</h3>
+
+              @if (task.images.length === 0) {
+                <p class="hint">No photos yet.</p>
+              } @else {
+                <div class="image-grid">
+                  @for (image of task.images; track image.id) {
+                    <button
+                      type="button"
+                      class="image-thumb"
+                      (click)="openTaskImagePreview(image)"
+                      aria-label="Open task photo"
+                    >
+                      <img [src]="imageDataUri(image)" alt="Task photo" loading="lazy" />
+                    </button>
+                  }
+                </div>
+              }
+
+              <form class="task-image-form" (ngSubmit)="uploadTaskImage(task)">
+                <input type="file" accept="image/*" (change)="onTaskImageSelected(task.id, $event)" />
+                <button type="submit" [disabled]="busy() || isUploadingImage(task.id)">
+                  {{ isUploadingImage(task.id) ? 'Uploading...' : 'Upload Photo' }}
+                </button>
+              </form>
+
+              <small class="hint">{{ selectedImageName(task.id) }}</small>
+            </section>
+
             <div class="status-row">
               <span>Set status:</span>
               <div class="status-actions">
@@ -174,4 +204,39 @@
       </div>
     }
   </section>
+
+  @if (previewImageSrc()) {
+    <div
+      class="image-preview-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Task photo preview"
+      (click)="closeImagePreview()"
+    >
+      <button
+        type="button"
+        class="image-preview-close"
+        (click)="closeImagePreview(); $event.stopPropagation()"
+      >
+        Close
+      </button>
+
+      <div class="image-preview-stage" (click)="$event.stopPropagation()">
+        <img
+          class="image-preview-media"
+          [src]="previewImageSrc()"
+          alt="Task photo preview"
+        />
+      </div>
+    </div>
+  }
+
+  <button
+    type="button"
+    class="messi-toggle"
+    [attr.aria-pressed]="messiMode()"
+    (click)="toggleMessiMode()"
+  >
+    {{ messiMode() ? 'Turn Off Secret Background' : 'Secret Background' }}
+  </button>
 </section>

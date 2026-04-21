@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { catchError, Observable, throwError } from 'rxjs';
 
 import { API_BASE_URL } from './api.constants';
 import {
@@ -8,6 +8,7 @@ import {
   SubtaskCreatePayload,
   SubtaskUpdatePayload,
   Task,
+  TaskImage,
   TaskPayload
 } from './models';
 
@@ -41,5 +42,39 @@ export class TaskService {
 
   deleteSubtask(subtaskId: number): Observable<void> {
     return this.http.delete<void>(`${API_BASE_URL}/subtasks/${subtaskId}/`);
+  }
+
+  uploadTaskImage(taskId: number, file: File): Observable<Task | TaskImage> {
+    const endpoints = [
+      `${API_BASE_URL}/tasks/${taskId}/images/`,
+      `${API_BASE_URL}/tasks/${taskId}/image/`
+    ];
+
+    return this.tryUploadTaskImage(file, endpoints);
+  }
+
+  private tryUploadTaskImage(file: File, endpoints: string[]): Observable<Task | TaskImage> {
+    const [endpoint, ...fallbacks] = endpoints;
+
+    if (!endpoint) {
+      return throwError(() => new Error('Task image upload endpoint is not configured.'));
+    }
+
+    return this.http.post<Task | TaskImage>(endpoint, this.buildTaskImageFormData(file)).pipe(
+      catchError((error) => {
+        if (fallbacks.length === 0) {
+          return throwError(() => error);
+        }
+
+        return this.tryUploadTaskImage(file, fallbacks);
+      })
+    );
+  }
+
+  private buildTaskImageFormData(file: File): FormData {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('file', file);
+    return formData;
   }
 }

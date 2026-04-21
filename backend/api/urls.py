@@ -14,6 +14,7 @@ urlpatterns = [
     #Tasks
     path('tasks/', TaskListCreateAPIView.as_view()),
     path('tasks/<int:pk>/', TaskDetailAPIView.as_view()),
+    path('tasks/<int:pk>/images/', TaskImageUploadAPIView.as_view()),
 
     #SubTasks
     path('subtasks/', subtask_list_create_fbv),

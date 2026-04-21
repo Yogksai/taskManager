@@ -2,7 +2,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions, viewsets
-from .models import Task, SubTask
+from rest_framework.parsers import MultiPartParser, FormParser
+from .models import Task, SubTask, TaskImage
 from .serializers import TaskSerializer, SubTaskSerializer, UserSerializer
 # Create your views here.
 #User registration
@@ -56,6 +57,36 @@ class TaskDetailAPIView(APIView):
         if not task: return Response(status=404)
         task.delete()
         return Response(status=204)
+
+
+class TaskImageUploadAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request, pk):
+        task = Task.objects.filter(pk=pk, owner=request.user).first()
+        if not task:
+            return Response({"detail": "Task not found."}, status=404)
+
+        image_file = request.FILES.get('image') or request.FILES.get('file')
+        if not image_file:
+            return Response({"detail": "Image file is required (field: image or file)."}, status=400)
+
+        content_type = image_file.content_type or ''
+        if not content_type.startswith('image/'):
+            return Response({"detail": "Only image files are allowed."}, status=400)
+
+        payload = image_file.read()
+        if not payload:
+            return Response({"detail": "Uploaded file is empty."}, status=400)
+
+        TaskImage.objects.create(
+            payload=payload,
+            content_type=content_type[:50],
+            task=task
+        )
+
+        return Response(TaskSerializer(task).data, status=201)
 
 
 @api_view(['GET', 'POST'])

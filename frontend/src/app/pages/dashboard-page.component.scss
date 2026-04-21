@@ -7,8 +7,46 @@
 .dashboard-shell {
   width: min(1240px, 100%);
   margin-inline: auto;
+  position: relative;
   display: grid;
   gap: 1rem;
+}
+
+.dashboard-shell > *:not(.image-preview-backdrop) {
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-shell.messi-mode::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: clamp(160px, 18vw, 100%);
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(11, 24, 39, 0.48), rgba(11, 24, 39, 0.28)),
+    url('https://upload.wikimedia.org/wikipedia/commons/c/c1/Lionel_Messi_20180626.jpg') center 25% / cover no-repeat;
+  filter: saturate(1.04) contrast(1.02);
+  animation: messi-fade-in 360ms ease;
+}
+
+.dashboard-shell.messi-mode::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: 0; 
+  width: clamp(160px, 18vw, 100%);
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(11, 24, 39, 0.48), rgba(11, 24, 39, 0.28)),
+    url('https://upload.wikimedia.org/wikipedia/commons/8/8c/Cristiano_Ronaldo_2018.jpg') center 24% / cover no-repeat;
+  filter: saturate(1.04) contrast(1.02);
+  animation: messi-fade-in 360ms ease;
 }
 
 .topbar {
@@ -309,6 +347,111 @@ input:focus {
   gap: 0.6rem;
 }
 
+.task-images {
+  border-top: 1px dashed rgba(21, 35, 42, 0.2);
+  padding-top: 0.7rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.task-images h3 {
+  font-size: 0.95rem;
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 0.45rem;
+}
+
+.image-thumb {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 10px;
+  cursor: zoom-in;
+}
+
+.image-thumb:focus-visible {
+  outline: 2px solid rgba(42, 163, 155, 0.84);
+  outline-offset: 2px;
+}
+
+.image-grid img {
+  width: 100%;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(21, 35, 42, 0.18);
+}
+
+.task-image-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.45rem;
+}
+
+.task-image-form input[type='file'] {
+  padding: 0.45rem;
+  font-size: 0.75rem;
+}
+
+.task-image-form button {
+  border: 1px solid rgba(21, 35, 42, 0.14);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 0.28rem 0.62rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.image-preview-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(88, 88, 88, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: clamp(0.6rem, 2vw, 1rem);
+}
+
+.image-preview-stage {
+  width: min(1600px, 96vw);
+  height: min(94vh, 1200px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-preview-media {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.48);
+}
+
+.image-preview-close {
+  position: fixed;
+  top: 0.85rem;
+  right: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 999px;
+  background: rgba(44, 44, 44, 0.86);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.72rem;
+}
+
 .subtasks h3 {
   font-size: 0.95rem;
 }
@@ -354,6 +497,42 @@ li small {
   min-width: 68px;
 }
 
+.messi-toggle {
+  position: fixed;
+  right: 0.9rem;
+  bottom: 0.9rem;
+  z-index: 2;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  border-radius: 999px;
+  background: rgba(11, 24, 39, 0.72);
+  backdrop-filter: blur(5px);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.44rem 0.72rem;
+  opacity: 0.26;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.messi-toggle:hover,
+.messi-toggle:focus-visible,
+.messi-toggle[aria-pressed='true'] {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+@keyframes messi-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes reveal {
   from {
     transform: translateY(8px);
@@ -393,5 +572,20 @@ li small {
   .task-panel-header {
     flex-direction: column;
     align-items: start;
+  }
+
+  .task-image-form {
+    grid-template-columns: 1fr;
+  }
+
+  .messi-toggle {
+    right: 0.6rem;
+    bottom: 0.6rem;
+    font-size: 0.68rem;
+  }
+
+  .dashboard-shell.messi-mode::before,
+  .dashboard-shell.messi-mode::after {
+    width: 26vw;
   }
 }

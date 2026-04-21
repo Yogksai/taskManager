@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, computed, signal } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthService } from '../core/auth.service';
-import { Subtask, Task, TaskStatus } from '../core/models';
+import { Subtask, Task, TaskImage, TaskStatus } from '../core/models';
 import { TaskService } from '../core/task.service';
 
 type TaskFilter = 'all' | TaskStatus;
@@ -18,9 +18,12 @@ type SubtaskForm = FormGroup<{
   templateUrl: './dashboard-page.component.html',
   styleUrl: './dashboard-page.component.scss'
 })
-export class DashboardPageComponent {
+export class DashboardPageComponent implements OnDestroy {
   readonly loading = signal(true);
   readonly busy = signal(false);
+  readonly messiMode = signal(false);
+  readonly uploadingTaskImageId = signal<number | null>(null);
+  readonly previewImageSrc = signal<string | null>(null);
   readonly filter = signal<TaskFilter>('all');
   readonly tasks = signal<Task[]>([]);
   readonly errorMessage = signal('');
@@ -31,7 +34,11 @@ export class DashboardPageComponent {
   newTaskStartTime = '';
   newTaskDueDate = '';
   newTaskDueTime = '';
+  readonly selectedTaskImageFiles = new Map<number, File>();
   readonly subtaskForms = new Map<number, SubtaskForm>();
+  private bodyOverflow = '';
+  private bodyPaddingRight = '';
+  private bodyLockApplied = false;
 
   readonly visibleTasks = computed(() => {
     const activeFilter = this.filter();
@@ -75,6 +82,7 @@ export class DashboardPageComponent {
         this.loading.set(false);
         this.tasks.set(tasks);
         this.ensureSubtaskForms(tasks);
+        this.syncSelectedTaskImageFiles(tasks);
       },
       error: () => {
         this.loading.set(false);
@@ -173,6 +181,7 @@ export class DashboardPageComponent {
     this.taskService.deleteTask(taskId).subscribe({
       next: () => {
         this.busy.set(false);
+        this.selectedTaskImageFiles.delete(taskId);
         this.fetchTasks();
       },
       error: () => {
@@ -254,6 +263,106 @@ export class DashboardPageComponent {
     });
   }
 
+  toggleMessiMode(): void {
+    this.messiMode.update((enabled) => !enabled);
+  }
+
+  onTaskImageSelected(taskId: number, event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0] ?? null;
+
+    if (!file) {
+      this.selectedTaskImageFiles.delete(taskId);
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.errorMessage.set('Please choose an image file.');
+      this.selectedTaskImageFiles.delete(taskId);
+      if (input) {
+        input.value = '';
+      }
+      return;
+    }
+
+    this.errorMessage.set('');
+    this.selectedTaskImageFiles.set(taskId, file);
+  }
+
+  uploadTaskImage(task: Task): void {
+    if (this.busy() || this.uploadingTaskImageId() !== null) {
+      return;
+    }
+
+    const file = this.selectedTaskImageFiles.get(task.id);
+    if (!file) {
+      this.errorMessage.set('Choose an image before uploading.');
+      return;
+    }
+
+    this.uploadingTaskImageId.set(task.id);
+    this.errorMessage.set('');
+
+    this.taskService.uploadTaskImage(task.id, file).subscribe({
+      next: () => {
+        this.uploadingTaskImageId.set(null);
+        this.selectedTaskImageFiles.delete(task.id);
+        this.fetchTasks();
+      },
+      error: () => {
+        this.uploadingTaskImageId.set(null);
+        this.errorMessage.set('Could not upload task image. Verify task image endpoint on backend.');
+      }
+    });
+  }
+
+  isUploadingImage(taskId: number): boolean {
+    return this.uploadingTaskImageId() === taskId;
+  }
+
+  selectedImageName(taskId: number): string {
+    return this.selectedTaskImageFiles.get(taskId)?.name ?? 'No image selected';
+  }
+
+  imageDataUri(image: TaskImage): string {
+    const base64 = image.image_base64;
+    if (!base64) {
+      return '';
+    }
+
+    if (base64.startsWith('data:image/')) {
+      return base64;
+    }
+
+    return `data:image/jpeg;base64,${base64}`;
+  }
+
+  openTaskImagePreview(image: TaskImage): void {
+    const src = this.imageDataUri(image);
+    if (!src) {
+      return;
+    }
+
+    this.previewImageSrc.set(src);
+    this.lockBodyScroll();
+  }
+
+  closeImagePreview(): void {
+    this.previewImageSrc.set(null);
+    this.unlockBodyScroll();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapePressed(): void {
+    if (this.previewImageSrc()) {
+      this.closeImagePreview();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.unlockBodyScroll();
+  }
+
   taskTrackBy(_: number, task: Task): number {
     return task.id;
   }
@@ -313,6 +422,42 @@ export class DashboardPageComponent {
     for (const task of tasks) {
       if (!this.subtaskForms.has(task.id)) {
         this.subtaskForms.set(task.id, this.buildSubtaskForm());
+      }
+    }
+  }
+
+  private lockBodyScroll(): void {
+    if (this.bodyLockApplied) {
+      return;
+    }
+
+    this.bodyOverflow = document.body.style.overflow;
+    this.bodyPaddingRight = document.body.style.paddingRight;
+
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    document.body.style.overflow = 'hidden';
+    this.bodyLockApplied = true;
+  }
+
+  private unlockBodyScroll(): void {
+    if (!this.bodyLockApplied) {
+      return;
+    }
+
+    document.body.style.overflow = this.bodyOverflow;
+    document.body.style.paddingRight = this.bodyPaddingRight;
+    this.bodyLockApplied = false;
+  }
+
+  private syncSelectedTaskImageFiles(tasks: Task[]): void {
+    const allowedIds = new Set(tasks.map((task) => task.id));
+    for (const taskId of this.selectedTaskImageFiles.keys()) {
+      if (!allowedIds.has(taskId)) {
+        this.selectedTaskImageFiles.delete(taskId);
       }
     }
   }
